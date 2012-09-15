@@ -56,4 +56,7 @@ summary of available functionality.
 
 - **context.clear(fillStyle)**: Clear the canvas (useful for animation).
 - **context.drawLoadedImage(src, x, y, w, h, finished)**: Draw an image onto
-  the canvas, from the cache if possible.
+  the canvas, including sprites and spritemaps. Recommended over Sprite.draw()
+  and SpriteMap.draw() for consistency (since you can use it with normal images
+  too) and recommended over context.draw() for performance (since it loads
+  images from the cache if possible). 
