@@ -11,7 +11,9 @@ requests that support this while preserving Canvas functionality. However,
 CSS animations are usually a more appropriate tool:
 https://developer.mozilla.org/en-US/docs/CSS/Using_CSS_animations
 
-MIT Licensed: http://opensource.org/licenses/mit-license.php
+The centipede-sprite.png image used for the demo is from Atari.
+
+All resources are MIT licensed: http://opensource.org/licenses/mit-license.php
 
 Created by Isaac Sukin (IceCreamYou).
 
