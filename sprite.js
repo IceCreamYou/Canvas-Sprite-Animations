@@ -261,7 +261,8 @@ var SpriteMap = Class.extend({
    * Run an animation sequence once.
    *
    * @param callback
-   *   A function to call after the animation sequence is done running.
+   *   (Optional) A function to call after the animation sequence is done
+   *   running.
    * @param name
    *   (Optional) The name of the animation sequence to start. If not given,
    *   defaults to the active animation sequence. If no animation sequence is
