@@ -52,5 +52,6 @@ summary of available functionality.
 
 ### Drawing
 
-- **context.clear(fillStyle)**:
-- **context.drawLoadedImage(src, x, y, w, h, finished)**:
+- **context.clear(fillStyle)**: Clear the canvas (useful for animation).
+- **context.drawLoadedImage(src, x, y, w, h, finished)**: Draw an image onto
+  the canvas, from the cache if possible.
