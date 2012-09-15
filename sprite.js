@@ -716,20 +716,36 @@ CanvasRenderingContext2D.prototype.clear = function(fillStyle) {
  * refreshing. The performance gain comes from caching images so that they do
  * not have to be loaded from the disk each time.
  *
- * This function can draw both standard images and Sprite objects.
+ * This function can draw both standard images and Sprite or SpriteMap objects.
+ * Using this function instead of Sprite.draw() or SpriteMap.draw() is
+ * recommended for consistency (since this function is also used for images).
+ *
+ * This image is helpful to understand the sx/sy/sw/sh parameters:
+ * http://images.whatwg.org/drawImage.png
  * 
  * @param src
- *   The file path of the image to load, or a Sprite object.
+ *   The file path of the image to load, or a Sprite or SpriteMap object.
  * @param x
- *   The x-coordinate at which to draw the top-left corner of the image.
+ *   The x-coordinate of the canvas graphics context at which to draw the
+ *   top-left corner of the image. (Often this is the number of pixels from the
+ *   left side of the canvas.)
  * @param y
- *   The y-coordinate at which to draw the top-left corner of the image.
+ *   The y-coordinate of the canvas graphics context at which to draw the
+ *   top-left corner of the image. (Often this is the number of pixels from the
+ *   top of the canvas.)
  * @param w
  *   (Optional) The width of the image. Defaults to the image width (or, for a
- *   Sprite, defaults to the projectedW).
+ *   Sprite or SpriteMap, defaults to the projectedW).
  * @param h
  *   (Optional) The height of the image. Defaults to the image height (or, for
- *   a Sprite, defaults to the projectedH).
+ *   a Sprite or SpriteMap, defaults to the projectedH).
+ * @param sx, sy, sw, sh
+ *   (Optional) If any of these parameters are specified, each of the others
+ *   must also be specified, and together they define a rectangle within the
+ *   image that will be drawn onto the canvas. sx and sy are the x- and y-
+ *   coordinates (within the image) of the upper-left corner of the source
+ *   rectangle, respectively, and sw and sh are the width and height of the
+ *   source rectangle, respectively. 
  * @param finished
  *   (Optional) The first time an image is drawn, it will be drawn
  *   asynchronously and could appear out of order (e.g. "above" an image that
@@ -739,16 +755,21 @@ CanvasRenderingContext2D.prototype.clear = function(fillStyle) {
  *   painted. Alternatively this delay can be eliminated by pre-loading the
  *   image in question with preloadImages().
  */
-CanvasRenderingContext2D.prototype.drawLoadedImage = function(src, x, y, w, h, finished) {
+CanvasRenderingContext2D.prototype.drawLoadedImage = function(src, x, y, w, h, sx, sy, sw, sh, finished) {
   if (typeof src == 'object') {
     src.draw(this, x, y, w, h);
   }
-  else if (cachedImage = getImageFromCache(src)) {
+  else if (Caches.images[src]) {
     if (w && h) {
-      this.drawImage(cachedImage, x, y, w, h);
+      if (sw && sh) {
+        this.drawImage(Caches.images[src], sx, sy, sw, sh, x, y, w, h);
+      }
+      else {
+        this.drawImage(Caches.images[src], x, y, w, h);
+      }
     }
     else {
-      this.drawImage(cachedImage, x, y);
+      this.drawImage(Caches.images[src], x, y);
     }
     if (finished) {
       finished();
@@ -759,17 +780,22 @@ CanvasRenderingContext2D.prototype.drawLoadedImage = function(src, x, y, w, h, f
     var t = this;
     image.onload = function() {
       if (w && h) {
-        t.drawImage(image, x, y, w, h);
+        if (sw && sh) {
+          t.drawImage(image, sx, sy, sw, sh, x, y, w, h);
+        }
+        else {
+          t.drawImage(image, x, y, w, h);
+        }
       }
       else {
         t.drawImage(image, x, y);
       }
+      Caches.images[src] = image;
+      if (finished) {
+        finished();
+      }
     };
     image.src = src;
-    saveImageToCache(src, image);
-    if (finished) {
-      finished();
-    }
   }
 };
 
