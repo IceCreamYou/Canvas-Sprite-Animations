@@ -25,7 +25,25 @@ Put the script in your HTML document:
 
     <script src="sprite.js"></script>
 
-There are several ways to use sprite.js. See index.html for a full example.
+There are several ways to use sprite.js. At its simplest:
+
+    // Create the sprite.
+    var sprite = new Sprite('sprite.png', {
+      frameW: 60,
+      frameH: 60,
+      postInitCallback: function() {
+        // Start animating.
+        sprite.startLoop();
+      },
+    });
+    
+    // Draw the sprite.
+    // var context = document.getElementById('canvas').getContext('2d');
+    context.drawLoadedImage(sprite, 100, 100); // x and y position on canvas
+
+There are many more options you can use for finer-grained control, including
+using multiple animation sequences on one sprite sheet. See index.html for a
+full example.
 
 
 API
@@ -34,15 +52,6 @@ API
 sprite.js is very heavily documented and you should refer to it for a complete
 explanation of what all the features do and how to use them. Below is a brief
 summary of available functionality.
-
-### Caching
-
-- **preloadImages(files, options)**: Pre-load images into the cache so you
-  don't have to deal with a delay to load them from disk later.
-- **getImageFromCache(src)**: Retrieve an image from the cache. You can
-  override this if you want to use an alternative caching system.
-- **saveImageToCache(src, image)**: Save a loaded image into the cache. You can
-  override this if you want to use an alternative caching system.
 
 ### Sprites
 
@@ -59,4 +68,13 @@ summary of available functionality.
   the canvas, including sprites and spritemaps. Recommended over Sprite.draw()
   and SpriteMap.draw() for consistency (since you can use it with normal images
   too) and recommended over context.draw() for performance (since it loads
-  images from the cache if possible). 
+  images from the cache if possible).
+
+### Caching
+
+- **preloadImages(files, options)**: Pre-load images into the cache so you
+  don't have to deal with a delay to load them from disk later.
+- **getImageFromCache(src)**: Retrieve an image from the cache. You can
+  override this if you want to use an alternative caching system.
+- **saveImageToCache(src, image)**: Save a loaded image into the cache. You can
+  override this if you want to use an alternative caching system.

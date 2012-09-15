@@ -155,6 +155,8 @@ function preloadImages(files, options) {
 /**
  * Manage multiple sprite animations in the same sprite sheet.
  *
+ * All methods except set(), unset(), and draw() are chainable.
+ *
  * @param src
  *   The file path of the base image.
  * @param animations
@@ -176,12 +178,22 @@ var SpriteMap = Class.extend({
   init: function(src, animations, options) {
     this.sprite = new Sprite(src, options);
     this.maps = {};
-    for (var name in animations) {
+    var name;
+    for (name in animations) {
       if (animations.hasOwnProperty(name)) {
         this.set(name, animations[name]);
       }
     }
   },
+  /**
+   * Add or modify an animation sequence.
+   *
+   * @param name
+   *   The name of the sequence.
+   * @param options
+   *   (Optional) An object with startRow, startCol, endRow, and/or endRow
+   *   properties.
+   */
   set: function(name, options) {
     this.maps[name] = {
         startRow: options.startRow === undefined ? 0 : options.startRow,
@@ -191,16 +203,36 @@ var SpriteMap = Class.extend({
         squeeze: options.squeeze === undefined ? false : options.squeeze,
     };
   },
+  /**
+   * Remove an animation sequence.
+   *
+   * @param name
+   *   The animation sequence to remove.
+   */
   unset: function(name) {
     if (this.maps.hasOwnProperty(name)) {
       delete this.maps[name];
     }
   },
+  /**
+   * Switch the active animation sequence.
+   *
+   * @param name
+   *   The name of the animation sequence to switch to.
+   */
   use: function(name) {
     var m = this.maps[name];
     this.sprite.setLoop(m.startRow, m.startCol, m.endRow, m.endCol, m.squeeze);
     return this;
   },
+  /**
+   * Start the animation sequence.
+   *
+   * @param name
+   *   (Optional) The name of the animation sequence to start. If not given,
+   *   defaults to the active animation sequence. If no animation sequence is
+   *   active, the default sequence is to show the whole sprite sheet.
+   */
   start: function(name) {
     if (name) {
       this.use(name);
@@ -208,14 +240,33 @@ var SpriteMap = Class.extend({
     this.sprite.startLoop();
     return this;
   },
+  /**
+   * Stop the currently running animation sequence.
+   */
   stop: function() {
     this.sprite.stop();
     return this;
   },
+  /**
+   * Reset the active animation sequence to the first frame.
+   *
+   * If the sequence is running when reset() is called, it will still be
+   * running afterwards, so usually stop() is called first.
+   */
   reset: function() {
     this.sprite.reset();
     return this;
   },
+  /**
+   * Run an animation sequence once.
+   *
+   * @param callback
+   *   A function to call after the animation sequence is done running.
+   * @param name
+   *   (Optional) The name of the animation sequence to start. If not given,
+   *   defaults to the active animation sequence. If no animation sequence is
+   *   active, the default sequence is to show the whole sprite sheet.
+   */
   runOnce: function(callback, name) {
     if (name) {
       this.use(name);
@@ -223,6 +274,11 @@ var SpriteMap = Class.extend({
     this.sprite.runLoop(callback);
     return this;
   },
+  /**
+   * Draw the sprite's current frame.
+   *
+   * context.drawLoadedImage() is recommended instead, for consistency.
+   */
   draw: function(ctx, x, y, w, h) {
     this.sprite.draw(ctx, x, y, w, h);
   },
