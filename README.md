@@ -31,7 +31,7 @@ There are several ways to use sprite.js. At its simplest:
     var sprite = new Sprite('sprite.png', {
       frameW: 60,
       frameH: 60,
-      postInitCallback: function() {
+      postInitCallback: function() { // Runs when the sprite is ready.
         // Start animating.
         sprite.startLoop();
       },
