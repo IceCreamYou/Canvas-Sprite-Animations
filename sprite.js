@@ -716,15 +716,33 @@ CanvasRenderingContext2D.prototype.clear = function(fillStyle) {
  * refreshing. The performance gain comes from caching images so that they do
  * not have to be loaded from the disk each time.
  *
- * This function can draw both standard images and Sprite or SpriteMap objects.
- * Using this function instead of Sprite.draw() or SpriteMap.draw() is
- * recommended for consistency (since this function is also used for images).
- *
+ * Additionally, this function can draw Sprite and SpriteMap objects as well as
+ * the usual standard images, videos, and canvases. Using this function instead
+ * of Sprite.draw() or SpriteMap.draw() is recommended for consistency (since
+ * this function is also used for images). It also allows drawing an image by
+ * passing in the file path, whereas using context.drawImage() requires that
+ * you manually load the image.
+ * 
  * This image is helpful to understand the sx/sy/sw/sh parameters:
  * http://images.whatwg.org/drawImage.png
+ *
+ * This function falls back to the default handling for videos rather than
+ * attempting to manage loading and caching them. Note that usually if you want
+ * to display a video in a canvas being animated, you should draw it to a
+ * separate canvas and draw that canvas instead (or overlay it).
+ *
+ * Other than as described above, this function has the same behavior as
+ * context.drawImage(), including errors thrown. More details are available at
+ * http://j.mp/whatwg-canvas-drawing
  * 
  * @param src
- *   The file path of the image to load, or a Sprite or SpriteMap object.
+ *   One of the following, indicating what to draw:
+ *   - The file path of an image to draw
+ *   - A Sprite or SpriteMap object
+ *   - An HTMLCanvasElement
+ *   - An HTMLImageElement
+ *   - An HTMLVideoElement
+ *   If something else is passed in, this function throws a TypeMismatchError.
  * @param x
  *   The x-coordinate of the canvas graphics context at which to draw the
  *   top-left corner of the image. (Often this is the number of pixels from the
@@ -745,7 +763,8 @@ CanvasRenderingContext2D.prototype.clear = function(fillStyle) {
  *   image that will be drawn onto the canvas. sx and sy are the x- and y-
  *   coordinates (within the image) of the upper-left corner of the source
  *   rectangle, respectively, and sw and sh are the width and height of the
- *   source rectangle, respectively. 
+ *   source rectangle, respectively. These parameters are ignored when drawing
+ *   a Sprite or SpriteMap.
  * @param finished
  *   (Optional) The first time an image is drawn, it will be drawn
  *   asynchronously and could appear out of order (e.g. "above" an image that
@@ -756,46 +775,72 @@ CanvasRenderingContext2D.prototype.clear = function(fillStyle) {
  *   image in question with preloadImages().
  */
 CanvasRenderingContext2D.prototype.drawLoadedImage = function(src, x, y, w, h, sx, sy, sw, sh, finished) {
-  if (typeof src == 'object') {
-    src.draw(this, x, y, w, h);
-  }
-  else if (Caches.images[src]) {
+  var _drawImage = function(t, image, x, y, w, h, sx, sy, sw, sh) {
     if (w && h) {
       if (sw && sh) {
-        this.drawImage(Caches.images[src], sx, sy, sw, sh, x, y, w, h);
+        t.drawImage(image, sx, sy, sw, sh, x, y, w, h);
       }
       else {
-        this.drawImage(Caches.images[src], x, y, w, h);
+        t.drawImage(image, x, y, w, h);
       }
     }
     else {
-      this.drawImage(Caches.images[src], x, y);
+      t.drawImage(image, x, y);
     }
-    if (finished) {
+    if (typeof finished == 'function') {
+      finished();
+    }
+  };
+  if (src instanceof Sprite || src instanceof SpriteMap) { // draw a sprite
+    src.draw(this, x, y, w, h);
+    if (typeof finished == 'function') {
       finished();
     }
   }
-  else {
+  else if (src instanceof HTMLCanvasElement || // draw a canvas
+      src instanceof HTMLVideoElement) { // draw a video
+    _drawImage(this, src, x, y, w, h, sx, sy, sw, sh);
+  }
+  else if (src instanceof HTMLImageElement) { // draw an image directly
+    var image = src, src = image.src, t = this;
+    if (!src) { // can't draw an empty image
+      return;
+    }
+    if (!Caches.images[src]) { // cache the image by source
+      Caches.images[src] = image;
+    }
+    if (image.complete) { // if the image is loaded, draw it
+      _drawImage(this, image, x, y, w, h, sx, sy, sw, sh);
+    }
+    else { // if the image is not loaded, wait to draw it until it's loaded
+      if (typeof image.onload == 'function') {
+        var o = image.onload;
+        image.onload = function() {
+          o();
+          _drawImage(t, image, x, y, w, h, sx, sy, sw, sh);
+        };
+      }
+      else {
+        image.onload = function() {
+          _drawImage(t, image, x, y, w, h, sx, sy, sw, sh);
+        };
+      }
+    }
+  }
+  else if (typeof src == 'string' && Caches.images[src]) { // cached image path
+    _drawImage(this, Caches.images[src], x, y, w, h, sx, sy, sw, sh);
+  }
+  else if (typeof src == 'string') { // uncached image path
     var image = new Image();
     var t = this;
     image.onload = function() {
-      if (w && h) {
-        if (sw && sh) {
-          t.drawImage(image, sx, sy, sw, sh, x, y, w, h);
-        }
-        else {
-          t.drawImage(image, x, y, w, h);
-        }
-      }
-      else {
-        t.drawImage(image, x, y);
-      }
       Caches.images[src] = image;
-      if (finished) {
-        finished();
-      }
+      _drawImage(t, image, x, y, w, h, sx, sy, sw, sh);
     };
     image.src = src;
+  }
+  else {
+    throw new TypeMismatchError('drawLoadedImage(): Could not draw; type not recognized.');
   }
 };
 
