@@ -116,7 +116,7 @@
 })(window);
 
 /**
- * Preload a list of images.
+ * Preload a list of images asynchronously.
  * 
  * @param files
  *   An array of paths to images to preload.
@@ -130,22 +130,26 @@
  *     images to load.
  */
 function preloadImages(files, options) {
-  options._count = options._count || files.length;
-  options._num = options._num + 1 || 1;
-  if (files.length === 0 && options.finishCallback) {
-    options.finishCallback(options._count);
-  }
-  else {
-    var image = new Image();
+  var l = files.length, m = -1;
+  var notifyLoaded = function(itemCallback, src) {
+    m++;
+    if (itemCallback) {
+      itemCallback(src, m, l);
+    }
+    if (m == l && options.finishCallback) {
+      options.finishCallback(l);
+    }
+  };
+  notifyLoaded();
+  while (files.length) {
     var src = files.pop();
+    var image = new Image();
+    image.num = l-files.length;
     image.onload = function() {
-      if (options.itemCallback) {
-        options.itemCallback(src, options._num, options._count);
-      }
-      preloadImages(files, options);
-    };
+      Caches.images[this.src] = this;
+      notifyLoaded(options.itemCallback, this.src);
+    }
     image.src = src;
-    saveImageToCache(src, image);
   }
 }
 
