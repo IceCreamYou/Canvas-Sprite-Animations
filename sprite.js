@@ -453,17 +453,27 @@ var Sprite = Class.extend({
    * @see CanvasRenderingContext2D.prototype.drawLoadedImage()
    */
   draw: function(ctx, x, y, w, h) {
-    ctx.drawImage(
-        this.image,       // image
-        this.col * this.frameW, // image x-offset
-        this.row * this.frameH, // image y-offset
-        this.frameW,      // image slice width
-        this.frameH,      // image slice height
-        x,            // canvas x-position
-        y,            // canvas y-position
-        w || this.projectedW, // slice width on canvas
-        h || this.projectedH  // slice height on canvas
-    );
+    try {
+      ctx.drawImage(
+          this.image,             // image
+          this.col * this.frameW, // image x-offset
+          this.row * this.frameH, // image y-offset
+          this.frameW,            // image slice width
+          this.frameH,            // image slice height
+          x,                      // canvas x-position
+          y,                      // canvas y-position
+          w || this.projectedW,   // slice width on canvas
+          h || this.projectedH    // slice height on canvas
+      );
+    } catch(e) {
+      if (console && console.error) {
+        // Usually the reason you would get an error here is if you tried to
+        // draw() an image before it was fully loaded. That's an ignore-able
+        // error, because if you're animating, the image will just pop in when
+        // it loads.
+        console.error(e);
+      }
+    }
     if (!this.useTimer && Date.now() - this.lastFrameUpdateTime > this.interval) {
       this.nextFrame();
     }
