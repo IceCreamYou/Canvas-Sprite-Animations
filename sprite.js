@@ -145,8 +145,9 @@ function preloadImages(files, options) {
     var src = files.pop();
     var image = new Image();
     image.num = l-files.length;
+    image._src = src;
     image.onload = function() {
-      Caches.images[this.src] = this;
+      saveImageToCache(this._src, this);
       notifyLoaded(options.itemCallback, this.src);
     }
     image.src = src;
@@ -175,6 +176,12 @@ function preloadImages(files, options) {
  *     last row.
  *   - endCol: The column at which to end the animation sequence. Defaults to
  *     the last column.
+ *   - squeeze: Changes the way frames are grouped together. See the
+ *     explanation of the options for the Sprite constructor for more details.
+ *   Alternatively, instead of the inner values being objects with the
+ *   properties specified above, they can be arrays that hold the same values
+ *   (in the same order). This is less clear to read, but more concise to
+ *   write.
  * @param options
  *   This parameter is the same as the options parameter for the Sprite class.
  */
@@ -195,17 +202,28 @@ var SpriteMap = Class.extend({
    * @param name
    *   The name of the sequence.
    * @param options
-   *   (Optional) An object with startRow, startCol, endRow, and/or endRow
-   *   properties.
+   *   (Optional) An object with startRow, startCol, endRow, endCol, and/or
+   *   squeeze properties, or an array with those values (in that order, but
+   *   all optional).
    */
   set: function(name, options) {
-    this.maps[name] = {
-        startRow: options.startRow === undefined ? 0 : options.startRow,
-        startCol: options.startCol === undefined ? 0 : options.startCol,
-        endRow: options.endRow === undefined ? this.sprite.rows-1 : options.endRow,
-        endCol: options.endCol === undefined ? this.sprite.cols-1 : options.endCol,
-        squeeze: options.squeeze === undefined ? false : options.squeeze,
-    };
+    if (options instanceof Array) {
+      options = {
+          startRow: options[0],
+          startCol: options[1],
+          endRow: options[2],
+          endCol: options[3],
+          squeeze: options[4],
+      };
+    }
+    options = jQuery.extend({
+      startRow: 0,
+      startCol: 0,
+      endRow: this.sprite.rows-1,
+      endCol: this.sprite.cols-1,
+      squeeze: false,
+    }, options);
+    this.maps[name] = options;
   },
   /**
    * Remove an animation sequence.
@@ -223,8 +241,15 @@ var SpriteMap = Class.extend({
    *
    * @param name
    *   The name of the animation sequence to switch to.
+   * @param restartIfInUse
+   *   (Optional) A boolean indicating whether to restart the animation
+   *   sequence if the specified sequence is already in use. Defaults to false.
    */
-  use: function(name) {
+  use: function(name, restartIfInUse) {
+    if (this.activeLoop == name && !restartIfInUse) {
+      return this;
+    }
+    this.activeLoop = name;
     var m = this.maps[name];
     this.sprite.setLoop(m.startRow, m.startCol, m.endRow, m.endCol, m.squeeze);
     return this;
@@ -820,8 +845,8 @@ CanvasRenderingContext2D.prototype.drawLoadedImage = function(src, x, y, w, h, s
     if (!src) { // can't draw an empty image
       return;
     }
-    if (!Caches.images[src]) { // cache the image by source
-      Caches.images[src] = image;
+    if (!getImageFromCache(src)) { // cache the image by source
+      saveImageToCache(src, image);
     }
     if (image.complete) { // if the image is loaded, draw it
       _drawImage(this, image, x, y, w, h, sx, sy, sw, sh);
@@ -841,14 +866,14 @@ CanvasRenderingContext2D.prototype.drawLoadedImage = function(src, x, y, w, h, s
       }
     }
   }
-  else if (typeof src == 'string' && Caches.images[src]) { // cached image path
-    _drawImage(this, Caches.images[src], x, y, w, h, sx, sy, sw, sh);
+  else if (typeof src == 'string' && getImageFromCache(src)) { // cached image path
+    _drawImage(this, getImageFromCache(src), x, y, w, h, sx, sy, sw, sh);
   }
   else if (typeof src == 'string') { // uncached image path
     var image = new Image();
     var t = this;
     image.onload = function() {
-      Caches.images[src] = image;
+      saveImageToCache(src, image);
       _drawImage(t, image, x, y, w, h, sx, sy, sw, sh);
     };
     image.src = src;
