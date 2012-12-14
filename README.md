@@ -60,12 +60,13 @@ summary of available functionality.
   manage different animation sequences on your sprite sheet.
     - set(name, options): Add an animation sequence to the sprite map.
     - unset(name): Remove an animation sequence from the sprite map.
-    - use(name): Set the active animation sequence.
+    - use(name, restartIfInUse): Set the active animation sequence.
     - start(name): Start animating in a loop.
     - stop(): Stop animating.
     - reset(): Reset the active animation sequence to the first frame.
     - runOnce(callback, name): Run the animation sequence once.
     - draw(ctx, x, y, w, h): Draw the current animation frame.
+    - activeLoop: The name of the currently active animation sequence.
 - **new Sprite(src, options)**: Create a new sprite object. Use this instead of
   SpriteMap if you only have one animation sequence on your sprite sheet or if
   you need more control over how the frames advance.
