@@ -202,9 +202,9 @@ var SpriteMap = Class.extend({
    * @param name
    *   The name of the sequence.
    * @param options
-   *   (Optional) An object with startRow, startCol, endRow, endCol, and/or
-   *   squeeze properties, or an array with those values (in that order, but
-   *   all optional).
+   *   (Optional) An object with startRow, startCol, endRow, endCol, squeeze,
+   *   and/or flipped properties, or an array with those values (in that order,
+   *   but all optional).
    */
   set: function(name, options) {
     if (options instanceof Array) {
@@ -214,6 +214,7 @@ var SpriteMap = Class.extend({
           endRow: options[2],
           endCol: options[3],
           squeeze: options[4],
+          flipped: options[5],
       };
     }
     options = jQuery.extend({
@@ -222,6 +223,7 @@ var SpriteMap = Class.extend({
       endRow: this.sprite.rows-1,
       endCol: this.sprite.cols-1,
       squeeze: false,
+      flipped: [false, false],
     }, options);
     this.maps[name] = options;
   },
@@ -251,7 +253,7 @@ var SpriteMap = Class.extend({
     }
     this.activeLoop = name;
     var m = this.maps[name];
-    this.sprite.setLoop(m.startRow, m.startCol, m.endRow, m.endCol, m.squeeze);
+    this.sprite.setLoop(m.startRow, m.startCol, m.endRow, m.endCol, m.squeeze, m.flipped);
     return this;
   },
   /**
@@ -311,6 +313,12 @@ var SpriteMap = Class.extend({
    */
   draw: function(ctx, x, y, w, h) {
     this.sprite.draw(ctx, x, y, w, h);
+  },
+  /**
+   * Clone the SpriteMap (return an identical copy).
+   */
+  clone: function() {
+    return new SpriteMap(this.sprite.sourceFile, this.maps, this.sprite);
   },
 });
 
@@ -390,6 +398,9 @@ var SpriteMap = Class.extend({
  *     less accurate, and in any case it can be up to 15ms off on Windows) but
  *     it is more performance-friendly and also ensures that frames will never
  *     skip if the sprite is not drawn.
+ *   - flipped: An array with two boolean values indicating whether to draw
+ *     each frame flipped right-to-left and top-to-bottom, respectively.
+ *     Defaults to [false, false] (not flipped along either axis).
  *   - postInitCallback: A function that will run at the end of the
  *     initialization process (if the base image has not been loaded before,
  *     this will be after the image has been fully loaded asynchronously).
@@ -440,6 +451,7 @@ var Sprite = Class.extend({
     this.squeeze = options.squeeze || false;
     this.interval = options.interval || 125;
     this.useTimer = (options.useTimer === undefined ? true : options.useTimer);
+    this.flipped = options.flipped || [false, false];
     this.lastFrameUpdateTime = 0;
     this._runOnce = false;
     if (this.squeeze) {
@@ -479,6 +491,14 @@ var Sprite = Class.extend({
    */
   draw: function(ctx, x, y, w, h) {
     try {
+      ctx.save();
+      w = w || this.projectedW;
+      h = h || this.projectedH;
+      if (this.flipped[0] || this.flipped[1]) {
+        ctx.scale(this.flipped[0] ? -1 : 1, this.flipped[1] ? -1 : 1);
+        if (this.flipped[0]) x = -x - w;
+        if (this.flipped[1]) y = -y - h;
+      }
       ctx.drawImage(
           this.image,             // image
           this.col * this.frameW, // image x-offset
@@ -487,9 +507,10 @@ var Sprite = Class.extend({
           this.frameH,            // image slice height
           x,                      // canvas x-position
           y,                      // canvas y-position
-          w || this.projectedW,   // slice width on canvas
-          h || this.projectedH    // slice height on canvas
+          w,                      // slice width on canvas
+          h                       // slice height on canvas
       );
+      ctx.restore();
     } catch(e) {
       if (console && console.error) {
         // Usually the reason you would get an error here is if you tried to
@@ -574,8 +595,12 @@ var Sprite = Class.extend({
    *   frames from any column can be used (after startCol in startRow and
    *   before endCol in endRow). Defaults to false. For more information on
    *   how this works, see the documentation on instantiating a new Sprite.
+   * @param flipped
+   *   (Optional) An array with two boolean values indicating whether to draw
+ *     each frame flipped right-to-left and top-to-bottom, respectively.
+ *     Defaults to [false, false] (not flipped along either axis).
    */
-  setLoop: function(startRow, startCol, endRow, endCol, squeeze) {
+  setLoop: function(startRow, startCol, endRow, endCol, squeeze, flipped) {
     this.stopLoop();
     if (endRow === null || endRow === undefined) {
       endRow = this.rows-1;
@@ -585,6 +610,9 @@ var Sprite = Class.extend({
     }
     if (squeeze != undefined) {
       this.squeeze = squeeze;
+    }
+    if (flipped != undefined) {
+      this.flipped = flipped;
     }
     this.startRow = startRow, this.startCol = startCol,
     this.endRow = endRow, this.endCol = endCol;
@@ -601,9 +629,9 @@ var Sprite = Class.extend({
    * takes the same parameters as setLoop() for convenience; using these
    * parameters is equivalent to calling sprite.setLoop(params).startLoop().
    */
-  startLoop: function(startRow, startCol, endRow, endCol, squeeze) {
+  startLoop: function(startRow, startCol, endRow, endCol, squeeze, flipped) {
     if (startRow != undefined && startCol != undefined) {
-      this.setLoop(startRow, startCol, endRow, endCol, squeeze);
+      this.setLoop(startRow, startCol, endRow, endCol, squeeze, flipped);
     }
     this.lastFrameUpdateTime = Date.now();
     if (this.interval && this.useTimer) {
@@ -638,14 +666,11 @@ var Sprite = Class.extend({
    * takes the same parameters as setLoop() for convenience; using these
    * parameters is equivalent to calling sprite.setLoop(params).startLoop().
    */
-  runLoop: function(callback, startRow, startCol, endRow, endCol, squeeze) {
+  runLoop: function(callback, startRow, startCol, endRow, endCol, squeeze, flipped) {
     this.runLoopCallback = callback || function() {};
     this._runOnce = true;
-    var len = arguments.length, a = [];
-    for (var i = 1; i < len; i++) {
-      a[i-1] = arguments[i];
-    }
-    this.startLoop.apply(this, a);
+    Array.prototype.shift.call(arguments);
+    this.startLoop.apply(this, arguments);
   },
   /**
    * Goes back one frame in the animation loop.
@@ -724,7 +749,13 @@ var Sprite = Class.extend({
       col = (frame + this.startCol - 1) % this.cols;
     }
     return {frame: frame, row: row, col: col};
-  }
+  },
+  /**
+   * Clone the Sprite (return an identical copy).
+   */
+  clone: function() {
+    return new Sprite(this.sourceFile, this);
+  },
 });
 
 // END SPRITE ANIMATION LIBRARY ===============================================

@@ -66,6 +66,7 @@ summary of available functionality.
     - reset(): Reset the active animation sequence to the first frame.
     - runOnce(callback, name): Run the animation sequence once.
     - draw(ctx, x, y, w, h): Draw the current animation frame.
+    - clone(): Create a copy of the SpriteMap.
     - activeLoop: The name of the currently active animation sequence.
 - **new Sprite(src, options)**: Create a new sprite object. Use this instead of
   SpriteMap if you only have one animation sequence on your sprite sheet or if
@@ -86,6 +87,7 @@ summary of available functionality.
     - getFrame(): Get the current animation frame (row, column, frame number).
     - getNumFrames(): Get the number of frames in the animation sequence.
     - frameNumberToRowCol(frame): Convert a frame number to a row/column pair.
+    - clone(): Create a copy of the Sprite.
 
 ### Drawing
 
