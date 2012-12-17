@@ -217,15 +217,14 @@ var SpriteMap = Class.extend({
           flipped: options[5],
       };
     }
-    options = jQuery.extend({
-      startRow: 0,
-      startCol: 0,
-      endRow: this.sprite.rows-1,
-      endCol: this.sprite.cols-1,
-      squeeze: false,
-      flipped: [false, false],
-    }, options);
-    this.maps[name] = options;
+    this.maps[name] = {
+        startRow: typeof options.startRow != 'undefined' ? options.startRow : 0,
+        startCol: typeof options.startCol != 'undefined' ? options.startCol : 0,
+        endRow:   typeof options.endRow   != 'undefined' ? options.endRow   : this.sprite.rows-1,
+        endCol:   typeof options.endCol   != 'undefined' ? options.endCol   : this.sprite.cols-1,
+        squeeze:  typeof options.squeeze  != 'undefined' ? options.squeeze  : false,
+        flipped:  typeof options.flipped  != 'undefined' ? options.flipped  : [false, false],
+    };
   },
   /**
    * Remove an animation sequence.
@@ -449,7 +448,7 @@ var Sprite = Class.extend({
     this.col = this.startCol;
     this.frame = 1;
     this.squeeze = options.squeeze || false;
-    this.interval = options.interval || 125;
+    this.interval = (options.interval === undefined ? 125 : options.interval);
     this.useTimer = (options.useTimer === undefined ? true : options.useTimer);
     this.flipped = options.flipped || [false, false];
     this.lastFrameUpdateTime = 0;
