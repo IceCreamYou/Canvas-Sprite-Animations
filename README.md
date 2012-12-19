@@ -1,15 +1,4 @@
-Sprite.js is a powerful, easy-to-use Sprite animation library designed for
-HTML5 Canvas.
-
-The Sprite class relies on John Resig's JavaScript Inheritance Library. If
-you do not want to use this library, removing it as a dependency should be a
-straightforward task for an experienced JavaScript programmer.
-
-Few changes would be needed to modify this library to animate sprites in
-other mediums like CSS background images, and I will accept patches/pull
-requests that support this while preserving Canvas functionality. However,
-CSS animations are usually a more appropriate tool:
-https://developer.mozilla.org/en-US/docs/CSS/Using_CSS_animations
+Sprite.js is a powerful, easy-to-use Sprite animation library for HTML5 Canvas.
 
 The centipede-sprite.png image used for the demo is from Atari.
 
@@ -40,19 +29,19 @@ There are several ways to use sprite.js. At its simplest:
     // Draw the sprite. You should do this every time you repaint the canvas.
     // Frames update automatically.
     // var context = document.getElementById('canvas').getContext('2d');
-    context.drawLoadedImage(sprite, 100, 100); // x and y position on canvas
+    sprite.draw(context, 100, 100); // x and y position on canvas
 
 There are many more options you can use for finer-grained control, including
 using multiple animation sequences on one sprite sheet. See index.html for a
-full example.
+full example of using a SpriteMap.
 
 
 API
 ---
 
 sprite.js is very heavily documented and you should refer to it for a complete
-explanation of what all the features do and how to use them. Below is a brief
-summary of available functionality.
+explanation of what all the features do and how to use them. Below is a summary
+of available functionality.
 
 ### Sprites
 
@@ -89,20 +78,11 @@ summary of available functionality.
     - frameNumberToRowCol(frame): Convert a frame number to a row/column pair.
     - clone(): Create a copy of the Sprite.
 
-### Drawing
-
-- **context.clear(fillStyle)**: Clear the canvas (useful for animation).
-- **context.drawLoadedImage(src, x, y, w, h, finished)**: Draw an image onto
-  the canvas, including sprites and spritemaps. Recommended over Sprite.draw()
-  and SpriteMap.draw() for consistency (since you can use it with normal images
-  too) and recommended over context.draw() for performance (since it loads
-  images from the cache if possible).
-
 ### Caching
 
-- **preloadImages(files, options)**: Pre-load images into the cache so you
-  don't have to deal with a delay to load them from disk later.
-- **getImageFromCache(src)**: Retrieve an image from the cache. You can
-  override this if you want to use an alternative caching system.
-- **saveImageToCache(src, image)**: Save a loaded image into the cache. You can
-  override this if you want to use an alternative caching system.
+Override these methods if you want to use an alternative caching system.
+
+- **Sprite.preloadImages(files, options)**: Pre-load images into the cache so
+  you don't have to deal with a delay to load them from disk later.
+- **Sprite.getImageFromCache(src)**: Retrieve an image from the cache.
+- **Sprite.saveImageToCache(src, image)**: Save a loaded image into the cache.
