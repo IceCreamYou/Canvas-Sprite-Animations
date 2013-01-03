@@ -328,6 +328,10 @@ this.SpriteMap = SpriteMap;
  *   any case it can be up to 15ms off on Windows) but it is more
  *   performance-friendly and also ensures that frames will never skip if the
  *   sprite is not drawn.
+ * @param {Boolean} [options.advanceFramesManually=false]
+ *   If options.useTimer is false and this setting is true, frames will not be
+ *   advanced automatically and must be advanced manually instead (i.e. using
+ *   Sprite#nextFrame() or Sprite#changeFrame()).
  * @param {Object} [options.flipped={horizontal: false, vertical: false}]
  *   An object with "horizontal" and "vertical" properties (both Booleans)
  *   indicating whether the Sprite should be drawn flipped along the horizontal
@@ -379,6 +383,7 @@ Sprite.prototype = {
     this.squeeze = options.squeeze || false;
     this.interval = (options.interval === undefined ? 125 : options.interval);
     this.useTimer = (options.useTimer === undefined ? true : options.useTimer);
+    this.advanceFramesManually = options.advanceFramesManually || false;
     this.lastFrameUpdateTime = 0;
     this.flipped = options.flipped || {horizontal: false, vertical: false};
     this.flipped.horizontal = this.flipped.horizontal || false;
@@ -443,7 +448,8 @@ Sprite.prototype = {
         console.error(e);
       }
     }
-    if (!this.useTimer && Date.now() - this.lastFrameUpdateTime > this.interval) {
+    if (!this.useTimer && !this.advanceFramesManually &&
+        Date.now() - this.lastFrameUpdateTime > this.interval) {
       this.nextFrame();
     }
     return this;
