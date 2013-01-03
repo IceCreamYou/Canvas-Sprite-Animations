@@ -143,6 +143,10 @@ SpriteMap.prototype = {
     if (this.activeLoop == name && !restartIfInUse) {
       return this;
     }
+    /**
+     * @property {String} activeLoop
+     *   The name of the active animation sequence.
+     */
     this.activeLoop = name;
     var m = this.maps[name];
     this.sprite.setLoop(m.startRow, m.startCol, m.endRow, m.endCol, m.squeeze, m.flipped);
