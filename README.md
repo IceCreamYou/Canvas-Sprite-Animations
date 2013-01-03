@@ -64,13 +64,13 @@ of available functionality.
     - reset(): Reset the animation sequence to the first frame.
     - changeFrame(delta): Move the animation sequence forward or backward.
     - setFrame(row, col) or setFrame(frame): Move to a specific frame.
-    - setLoop(startRow, startCol, endRow, endCol, squeeze): Change the
+    - setLoop(startRow, startCol, endRow, endCol, squeeze, flipped): Change the
       animation sequence.
-    - startLoop(startRow, startCol, endRow, endCol, squeeze): Start animating
-      the animation sequence in a loop.
+    - startLoop(startRow, startCol, endRow, endCol, squeeze, flipped): Start
+      animating the animation sequence in a loop.
     - stopLoop(): Stop animating.
-    - runLoop(startRow, startCol, endRow, endCol, squeeze): Run the animation
-      sequence once.
+    - runLoop(startRow, startCol, endRow, endCol, squeeze, flipped): Run the
+      animation sequence once.
     - prevFrame(): Go to the previous animation frame.
     - nextFrame(): Go to the next animation frame.
     - getFrame(): Get the current animation frame (row, column, frame number).

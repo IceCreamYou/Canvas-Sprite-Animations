@@ -22,11 +22,13 @@ window.requestAnimFrame = (function(callback) { // shim
       window.setTimeout(callback, 1000 / 60);
     };
 })();
+
 function animate() { // Animation loop that draws the canvas
   context.clearRect(0, 0, context.canvas.width, context.canvas.height); // Clear the canvas
   spriteMap.draw(context, 100, 100); // Draw the sprite
   requestAnimFrame(animate); // Run the animation loop
 }
+
 window.onload = function() {
   // Get the canvas graphics context
   context = document.getElementById('canvas').getContext('2d');
@@ -47,7 +49,7 @@ window.onload = function() {
       BodyAltWalk: {startRow: 3, startCol: 1, endRow: 4, endCol: 4},
       BodyDown: {startRow: 4, startCol: 5, endRow: 4, endCol: 5},
       Walk: {startRow: 4, startCol: 6, endRow: 6, endCol: 0},
-      Face: {startRow: 6, startCol: 1, endRow: 6, endCol: 1},
+      Face: {startRow: 6, startCol: 1, endRow: 6, endCol: 1}
     },
     { // options
       frameW: 52, // Width of each frame of the animation in pixels
@@ -63,7 +65,7 @@ window.onload = function() {
           animNo = (animNo + 1) % animNames.length;
           spriteMap.use(animNames[animNo]); // Switch animation sequences
         }, 2500);
-      }, // Do something when the sprite finishes loading
+      } // Do something when the sprite finishes loading
     }
   );
 }

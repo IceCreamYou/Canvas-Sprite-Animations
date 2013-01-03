@@ -1,10 +1,10 @@
 /**
- * @file
- *   A powerful, easy-to-use Sprite animation library for HTML5 Canvas.
- *
- * @author Isaac Sukin (IceCreamYou)
+ * A powerful, easy-to-use Sprite animation library for HTML5 Canvas.
  *
  * MIT Licensed: http://opensource.org/licenses/mit-license.php
+ *
+ * @author Isaac Sukin (IceCreamYou)
+ * @ignore
  */
 
 // BEGIN SPRITE MAP LIBRARY ===================================================
@@ -14,14 +14,19 @@
 /**
  * Manage multiple sprite animations in the same sprite sheet.
  *
- * All methods except set(), unset(), and draw() are chainable.
+ * All methods except SpriteMap#clone are chainable (they return the SpriteMap
+ * instance).
  *
- * @param src
+ * @constructor
+ *   Creates a new SpriteMap instance.
+ *
+ * @param {String} src
  *   The file path of the base image.
- * @param animations
- *   A map (object) where the keys are the names of animation sequences and the
- *   values are maps (objects) specifying the starting and ending frames of the
+ * @param {Object} animations
+ *   A map (Object) where the keys are the names of animation sequences and the
+ *   values are maps (Objects) specifying the starting and ending frames of the
  *   relevant animation sequence. All properties are optional:
+ *
  *   - startRow: The row at which to start the animation sequence. Defaults to
  *     0 (zero) - the first row.
  *   - startCol: The column at which to start the animation sequence. Defaults
@@ -30,17 +35,28 @@
  *     last row.
  *   - endCol: The column at which to end the animation sequence. Defaults to
  *     the last column.
- *   - squeeze: Changes the way frames are grouped together. See the
- *     explanation of the options for the Sprite constructor for more details.
- *   Alternatively, instead of the inner values being objects with the
- *   properties specified above, they can be arrays that hold the same values
+ *   - squeeze: Determines which frames are included in the animation loop. If
+ *     set to true, frames are constrained within startCol and endCol,
+ *     regardless of the row. If set to false (the default), frames will run to
+ *     the last column in the Sprite and then loop back to the first column on
+ *     the next row in the Sprite until reaching the last frame in the loop.
+ *     More details on how this work are documented in the {@link Sprite}
+ *     constructor.
+ *   - flipped: An object with "horizontal" and "vertical" properties
+ *     (both Booleans) indicating whether the Sprite should be drawn flipped
+ *     along the horizontal or vertical axes.
+ *
+ *   Alternatively, instead of the inner values being Objects with the
+ *   properties specified above, they can be Arrays that hold the same values
  *   (in the same order). This is less clear to read, but more concise to
  *   write.
- * @param options
- *   This parameter is the same as the options parameter for the Sprite class.
+ * @param {Object} options
+ *   This parameter is the same as the options parameter for the {@link Sprite}
+ *   class.
  */
 function SpriteMap(src, animations, options) {
   this.sprite = new Sprite(src, options);
+  this.sprite.spriteMap = this;
   this.maps = {};
   var name;
   for (name in animations) {
@@ -53,12 +69,33 @@ SpriteMap.prototype = {
   /**
    * Add or modify an animation sequence.
    *
-   * @param name
+   * @param {String} name
    *   The name of the sequence.
-   * @param options
-   *   (Optional) An object with startRow, startCol, endRow, endCol, squeeze,
-   *   and/or flipped properties, or an array with those values (in that order,
-   *   but all optional).
+   * @param {Object/Array} [options]
+   *   Specifies the frames of the animation sequence. If an Array is passed,
+   *   the values should be included in the order below.
+   * @param {Number} [options.startRow=0]
+   *   The index of the sequence's starting row.
+   * @param {Number} [options.startCol=0]
+   *   The index of the sequence's starting column.
+   * @param {Number} [options.endRow]
+   *   The index of the sequence's ending row. Defaults to the Sprite's last
+   *   row.
+   * @param {Number} [options.endCol]
+   *   The index of the sequence's ending column. Defaults to the Sprite's last
+   *   column.
+   * @param {Boolean} [options.squeeze=false]
+   *   Determines which frames are included in the animation loop. If set to
+   *   true, frames are constrained within startCol and endCol, regardless of
+   *   the row. If set to false (the default), frames will run to the last
+   *   column in the Sprite and then loop back to the first column on the next
+   *   row in the Sprite until reaching the last frame in the loop. More
+   *   details on how this work are documented in the {@link Sprite}
+   *   constructor.
+   * @param {Boolean[]} [options.flipped]
+   *   Indicates whether the Sprite should be flipped when drawn.
+   * @param {Boolean} [options.flipped.horizontal=false]
+   * @param {Boolean} [options.flipped.vertical=false]
    */
   set: function(name, options) {
     if (options instanceof Array) {
@@ -68,37 +105,39 @@ SpriteMap.prototype = {
           endRow: options[2],
           endCol: options[3],
           squeeze: options[4],
-          flipped: options[5],
+          flipped: options[5]
       };
     }
     this.maps[name] = {
-        startRow: typeof options.startRow != 'undefined' ? options.startRow : 0,
-        startCol: typeof options.startCol != 'undefined' ? options.startCol : 0,
-        endRow:   typeof options.endRow   != 'undefined' ? options.endRow   : this.sprite.rows-1,
-        endCol:   typeof options.endCol   != 'undefined' ? options.endCol   : this.sprite.cols-1,
-        squeeze:  typeof options.squeeze  != 'undefined' ? options.squeeze  : false,
-        flipped:  typeof options.flipped  != 'undefined' ? options.flipped  : [false, false],
+        startRow: typeof options.startRow !== 'undefined' ? options.startRow : 0,
+        startCol: typeof options.startCol !== 'undefined' ? options.startCol : 0,
+        endRow:   typeof options.endRow   !== 'undefined' ? options.endRow   : this.sprite.rows-1,
+        endCol:   typeof options.endCol   !== 'undefined' ? options.endCol   : this.sprite.cols-1,
+        squeeze:  typeof options.squeeze  !== 'undefined' ? options.squeeze  : false,
+        flipped:  typeof options.flipped  !== 'undefined' ? options.flipped  : [false, false]
     };
+    return this;
   },
   /**
    * Remove an animation sequence.
    *
-   * @param name
+   * @param {String} name
    *   The animation sequence to remove.
    */
   unset: function(name) {
     if (this.maps.hasOwnProperty(name)) {
       delete this.maps[name];
     }
+    return this;
   },
   /**
    * Switch the active animation sequence.
    *
-   * @param name
+   * @param {String} name
    *   The name of the animation sequence to switch to.
-   * @param restartIfInUse
-   *   (Optional) A boolean indicating whether to restart the animation
-   *   sequence if the specified sequence is already in use. Defaults to false.
+   * @param {Boolean} [restartIfInUse=false]
+   *   A Boolean indicating whether to restart the animation sequence if the
+   *   specified sequence is already in use.
    */
   use: function(name, restartIfInUse) {
     if (this.activeLoop == name && !restartIfInUse) {
@@ -112,10 +151,10 @@ SpriteMap.prototype = {
   /**
    * Start the animation sequence.
    *
-   * @param name
-   *   (Optional) The name of the animation sequence to start. If not given,
-   *   defaults to the active animation sequence. If no animation sequence is
-   *   active, the default sequence is to show the whole sprite sheet.
+   * @param {String} [name]
+   *   The name of the animation sequence to start. If not given, defaults to
+   *   the active animation sequence. If no animation sequence is active, the
+   *   default sequence is to show the whole sprite sheet.
    */
   start: function(name) {
     if (name) {
@@ -134,8 +173,8 @@ SpriteMap.prototype = {
   /**
    * Reset the active animation sequence to the first frame.
    *
-   * If the sequence is running when reset() is called, it will still be
-   * running afterwards, so usually stop() is called first.
+   * If the sequence is running when SpriteMap#reset() is called, it will still
+   * be running afterwards, so usually SpriteMap#stop() is called first.
    */
   reset: function() {
     this.sprite.reset();
@@ -144,13 +183,15 @@ SpriteMap.prototype = {
   /**
    * Run an animation sequence once.
    *
-   * @param callback
-   *   (Optional) A function to call after the animation sequence is done
-   *   running.
-   * @param name
-   *   (Optional) The name of the animation sequence to start. If not given,
-   *   defaults to the active animation sequence. If no animation sequence is
-   *   active, the default sequence is to show the whole sprite sheet.
+   * @param {Function} [callback]
+   *   A function to call after the animation sequence is done running.
+   * @param {Sprite} [callback.sprite]
+   *   The Sprite that was animated. Its "spriteMap" property holds the parent
+   *   SpriteMap.
+   * @param {String} [name]
+   *   The name of the animation sequence to start. If not given, defaults to
+   *   the active animation sequence. If no animation sequence is active, the
+   *   default sequence is to show the whole sprite sheet.
    */
   runOnce: function(callback, name) {
     if (name) {
@@ -161,16 +202,37 @@ SpriteMap.prototype = {
   },
   /**
    * Draw the sprite's current frame.
+   *
+   * @param {CanvasRenderingContext2D} ctx
+   *   The canvas graphics context onto which the sprite should be drawn.
+   * @param {Number} x
+   *   The x-coordinate of the canvas graphics context at which the upper-left
+   *   corner of the Sprite should be drawn. This is usually (but not always)
+   *   the horizontal distance in pixels from the left side of the canvas.
+   * @param {Number} y
+   *   The y-coordinate of the canvas graphics context at which the upper-left
+   *   corner of the Sprite should be drawn. This is usually (but not always)
+   *   the vertical distance in pixels from the top of the canvas.
+   * @param {Number} [w]
+   *   The width of the image when drawn onto the canvas. Defaults to the
+   *   Sprite's projected width, which in turn defaults to the frame width.
+   * @param {Number} [h]
+   *   The height of the image when drawn onto the canvas. Defaults to the
+   *   Sprite's projected height, which in turn defaults to the frame height.
    */
   draw: function(ctx, x, y, w, h) {
     this.sprite.draw(ctx, x, y, w, h);
+    return this;
   },
   /**
-   * Clone the SpriteMap (return an identical copy).
+   * Clone the SpriteMap.
+   *
+   * @return {SpriteMap}
+   *   A SpriteMap instance that is identical to the current instance.
    */
   clone: function() {
     return new SpriteMap(this.sprite.sourceFile, this.maps, this.sprite);
-  },
+  }
 };
 
 this.SpriteMap = SpriteMap;
@@ -187,89 +249,97 @@ this.SpriteMap = SpriteMap;
  *
  * - Animations are always run left-to-right, top-to-bottom.
  * - All frames in the loop are assumed to be the same size.
- * - Rows and columns are zero-indexed (row, col, startRow, startCol, endRow,
- *   endCol) while frame number starts at 1. Usually frame 1 will have
- *   row and column values (0, 0).
- * - You can have multiple loops in the same image (as long as the frames are
- *   the same size) by either creating different Sprite objects for each loop
- *   or by using the setLoop() method (or the startLoop() shortcut).
+ * - Rows and columns (the row, col, startRow, startCol, endRow, and endCol
+ *   properties) are zero-indexed, while frame number starts at 1. Usually
+ *   frame 1 will have row and column values (0, 0).
+ * - Use {@link SpriteMap}s to maintain multiple loops in the same image.
  * - This class assumes that the properties passed in make sense (i.e. the
  *   starting cell occurs before the ending cell, the image has nonzero
  *   dimensions, etc.). Otherwise behavior is undefined.
- * - All public methods that do not exist to get specific values return "this"
+ * - All public methods that do not exist to get specific values return `this`
  *   (and therefore are chainable).
  *
- * @param src
+ * @constructor
+ *   Creates a new Sprite instance.
+ *
+ * @param {String} src
  *   The file path of the base image.
- * @param options
- *   (Optional) An object whose properties affect how the sprite is animated:
- *   - frameW: The width of each frame of the sprite. Defaults to the image
- *     width.
- *   - frameH: The height of each frame of the sprite. Defaults to the image
- *     height.
- *   - projectedW: The width of each frame when it is displayed on the canvas
- *     (allowing you to scale the frame). Defaults to the frame width.
- *   - projectedH: The height of each frame when it is displayed on the canvas
- *     (allowing you to scale the frame). Defaults to the frame height.
- *   - startRow: The row at which the animation loop should start. Defaults to
- *     0 (zero).
- *   - startCol: The column at which the animation loop should start. Defaults
- *     to 0 (zero).
- *   - endRow: The row at which the animation loop should stop. Defaults to
- *     the last row in the image. Animations will run from (startRow, startCol)
- *     to (endRow, endCol), inclusive.
- *   - endCol: The column at which the animation loop should stop. Defaults to
- *     the last column in the image. Animations will run from (startRow,
- *     startCol) to (endRow, endCol), inclusive.
- *   - squeeze: By default, animation loops are assumed to run all the way to
- *     the end of each row before continuing at the start of the next row. For
- *     example, a valid arrangement of loops in an image might look like this:
- *     
+ * @param {Object} [options]
+ *   An object whose properties affect how the sprite is animated. Each of the
+ *   properties will be attached to the Sprite object directly, along with
+ *   other calculated properties. It is best to call Sprite#getFrame() if you
+ *   need information about the currently displayed frame. You can read other
+ *   properties if you need to, but it is strongly recommended not to set
+ *   properties directly because the resulting behavior is undefined.
+ * @param {Number} [options.frameW]
+ *   The width of each frame of the sprite. Defaults to the image width.
+ * @param {Number} [options.frameH]
+ *   The height of each frame of the sprite. Defaults to the image height.
+ * @param {Number} [options.projectedW]
+ *   The width of each frame when it is displayed on the canvas (allowing you
+ *   to scale the frame). Defaults to the frame width.
+ * @param {Number} [options.projectedH]
+ *   The height of each frame when it is displayed on the canvas (allowing you
+ *   to scale the frame). Defaults to the frame height.
+ * @param {Number} [options.startRow=0]
+ *   The row at which the animation loop should start.
+ * @param {Number} [options.startCol=0]
+ *   The column at which the animation loop should start.
+ * @param {Number} [options.endRow]
+ *   The row at which the animation loop should stop. Animations will run from
+ *   (startRow, startCol) to (endRow, endCol), inclusive. Defaults to the last
+ *   row in the image.
+ * @param {Number} [options.endCol]
+ *   The column at which the animation loop should stop. Animations will run
+ *   from (startRow, startCol) to (endRow, endCol), inclusive. Defaults to the
+ *   last column in the image.
+ * @param {Boolean} [options.squeeze=false]
+ *   By default, animation loops are assumed to run all the way to the end of
+ *   each row before continuing at the start of the next row. For example, a
+ *   valid arrangement of loops in an image might look like this:
+ *
  *       AAAA
  *       AABB
  *       BBBC
  *       CCDD
  *       DDDD
- *     
- *     In this example, the "C" loop starts at (2, 2) and ends at (3, 1).
- *     However, if the squeeze option is set to true, loops will be contained
- *     inside startCol and endCol. For example, a valid arrangement of loops in
- *     an image might look like this:
- *     
+ *
+ *   In this example, the "C" loop starts at (2, 2) and ends at (3, 1).
+ *   However, if the squeeze option is set to true, loops will be contained
+ *   inside startCol and endCol. For example, a valid arrangement of loops in
+ *   an image might look like this:
+ *
  *       AABB
  *       AABB
  *       AACC
  *       DDCC
- *     
- *     Now the "C" loop starts at (2, 2) and ends at (3, 3) and all its frames
- *     occur within the box formed by those coordinates.
- *   - interval: The delay in milliseconds before switching frames when running
- *     the animation loop. Defaults to 125 (8 updates per second).
- *   - useTimer: If true, Sprite animation loops rely on setInterval() to
- *     update their frames regularly (this is the default). If false, the
- *     Sprite will rely on being drawn as the "tick" that lets it update its
- *     frames. This can be slightly less accurate than using a timer (assuming
- *     the sprite gets drawn on every canvas repaint; otherwise it can be a lot
- *     less accurate, and in any case it can be up to 15ms off on Windows) but
- *     it is more performance-friendly and also ensures that frames will never
- *     skip if the sprite is not drawn.
- *   - flipped: An array with two boolean values indicating whether to draw
- *     each frame flipped right-to-left and top-to-bottom, respectively.
- *     Defaults to [false, false] (not flipped along either axis).
- *   - postInitCallback: A function that will run at the end of the
- *     initialization process (if the source image has not been loaded before,
- *     this will be after the image has been fully loaded asynchronously).
- *     If the source image was not pre-loaded and you draw() the Sprite before
- *     this callback is invoked, nothing will be drawn because the image won't
- *     be loaded yet. This function receives the Sprite object as its only
- *     parameter.
  *
- * Each of the properties in the options parameter will be attached to the
- * Sprite object directly, along with other calculated properties. It is best
- * to call the getFrame() method if you need information about the currently
- * displayed frame. You can read other properties if you need to, but it is
- * strongly recommended not to set properties directly because doing so will
- * likely have unexpected consequences. 
+ *   Now the "C" loop starts at (2, 2) and ends at (3, 3) and all its frames
+ *   occur within the box formed by those coordinates.
+ * @param {Number} [options.interval=125]
+ *   The delay in milliseconds before switching frames when running the
+ *   animation loop.
+ * @param {Boolean} [options.useTimer=true]
+ *   If true, Sprite animation loops rely on setInterval() to update their
+ *   frames regularly (this is the default). If false, the Sprite will rely on
+ *   being drawn as the "tick" that lets it update its frames. This can be
+ *   slightly less accurate than using a timer (assuming the sprite gets drawn
+ *   on every canvas repaint; otherwise it can be a lot less accurate, and in
+ *   any case it can be up to 15ms off on Windows) but it is more
+ *   performance-friendly and also ensures that frames will never skip if the
+ *   sprite is not drawn.
+ * @param {Object} [options.flipped={horizontal: false, vertical: false}]
+ *   An object with "horizontal" and "vertical" properties (both Booleans)
+ *   indicating whether the Sprite should be drawn flipped along the horizontal
+ *   or vertical axes.
+ * @param {Function} [options.postInitCallback]
+ *   A function that will run at the end of the initialization process (if the
+ *   source image has not been loaded before, this will be after the image has
+ *   been fully loaded asynchronously). If the source image was not pre-loaded
+ *   and you draw() the Sprite before this callback is invoked, nothing will be
+ *   drawn because the image won't be loaded yet.
+ * @param {Sprite} [options.postInitCallback.sprite]
+ *   The Sprite that was loaded. 
  */
 function Sprite(src, options) {
   this.sourceFile = src;
@@ -309,8 +379,10 @@ Sprite.prototype = {
     this.squeeze = options.squeeze || false;
     this.interval = (options.interval === undefined ? 125 : options.interval);
     this.useTimer = (options.useTimer === undefined ? true : options.useTimer);
-    this.flipped = options.flipped || [false, false];
     this.lastFrameUpdateTime = 0;
+    this.flipped = options.flipped || {horizontal: false, vertical: false};
+    this.flipped.horizontal = this.flipped.horizontal || false;
+    this.flipped.vertical = this.flipped.vertical || false;
     this._runOnce = false;
     if (this.squeeze) {
       this.cols = this.endCol - this.startCol + 1;
@@ -323,33 +395,32 @@ Sprite.prototype = {
   /**
    * Draws the sprite.
    *
-   * @param ctx
+   * @param {CanvasRenderingContext2D} ctx
    *   The canvas graphics context onto which the sprite should be drawn.
-   * @param x
+   * @param {Number} x
    *   The x-coordinate of the canvas graphics context at which the upper-left
-   *   corner of the sprite should be drawn. This is usually (but not always)
+   *   corner of the Sprite should be drawn. This is usually (but not always)
    *   the horizontal distance in pixels from the left side of the canvas.
-   * @param y
+   * @param {Number} y
    *   The y-coordinate of the canvas graphics context at which the upper-left
-   *   corner of the sprite should be drawn. This is usually (but not always)
+   *   corner of the Sprite should be drawn. This is usually (but not always)
    *   the vertical distance in pixels from the top of the canvas.
-   * @param w
-   *   (Optional) The width of the image when drawn onto the canvas. Defaults to
-   *   the sprite's projected width, which in turn defaults to the frame width.
-   * @param h
-   *   (Optional) The height of the image when drawn onto the canvas. Defaults
-   *   to the sprite's projected height, which in turn defaults to the frame
-   *   height.
+   * @param {Number} [w]
+   *   The width of the image when drawn onto the canvas. Defaults to the
+   *   Sprite's projected width, which in turn defaults to the frame width.
+   * @param {Number} [h]
+   *   The height of the image when drawn onto the canvas. Defaults to the
+   *   Sprite's projected height, which in turn defaults to the frame height.
    */
   draw: function(ctx, x, y, w, h) {
     try {
       ctx.save();
       w = w || this.projectedW;
       h = h || this.projectedH;
-      if (this.flipped[0] || this.flipped[1]) {
-        ctx.scale(this.flipped[0] ? -1 : 1, this.flipped[1] ? -1 : 1);
-        if (this.flipped[0]) x = -x - w;
-        if (this.flipped[1]) y = -y - h;
+      if (this.flipped.horizontal || this.flipped.vertical) {
+        ctx.scale(this.flipped.horizontal ? -1 : 1, this.flipped.vertical ? -1 : 1);
+        if (this.flipped.horizontal) x = -x - w;
+        if (this.flipped.vertical) y = -y - h;
       }
       ctx.drawImage(
           this.image,             // image
@@ -375,12 +446,14 @@ Sprite.prototype = {
     if (!this.useTimer && Date.now() - this.lastFrameUpdateTime > this.interval) {
       this.nextFrame();
     }
+    return this;
   },
   /**
    * Reset the animation to its first frame.
    *
-   * Usually you will want to call stopLoop() immediately before reset();
-   * otherwise the animation will keep running (if it was running already).
+   * Usually you will want to call Sprite#stopLoop() immediately before
+   * Sprite#reset(); otherwise the animation will keep running (if it was
+   * running already).
    */
   reset: function() {
     this.row = this.startRow, this.col = this.startCol, this.frame = 1;
@@ -390,7 +463,7 @@ Sprite.prototype = {
   /**
    * Move forward or backward a specified number of frames.
    *
-   * @param delta
+   * @param {Number} delta
    *   The number of frames by which to move forward or backward (negative
    *   values move backward).
    */
@@ -402,15 +475,21 @@ Sprite.prototype = {
   /**
    * Moves to a specific frame in the animation loop.
    *
-   * This function supports passing either a frame number or row+column
+   * This function supports passing either a frame number or row and column
    * coordinates as parameters. Frames outside of the accepted range will
    * overflow/underflow.
    *
-   * Usually you will want to call stopLoop() immediately before setFrame();
-   * otherwise the animation will keep running (if it was running already).
+   * You may want to call Sprite#stopLoop() immediately before
+   * Sprite#setFrame(); otherwise the animation will keep running (if it was
+   * running already).
+   *
+   * @param {Number} row
+   *   The row of the frame to which to switch.
+   * @param {Number} col
+   *   The column of the frame to which to switch.
    */
   setFrame: function(row, col) {
-    if (col != undefined) {
+    if (col !== undefined) {
       this.row = row, this.col = col;
       if (this.squeeze) {
         this.frame = this.cols * (this.row - this.startRow + 1) -
@@ -431,26 +510,26 @@ Sprite.prototype = {
   /**
    * Sets the range of frames over which the sprite should loop.
    *
-   * @param startRow
+   * @param {Number} startRow
    *   The row of the frame at which animation should start.
-   * @param startCol
+   * @param {Number} startCol
    *   The column of the frame at which animation should start.
-   * @param endRow
-   *   (Optional) The row of the frame at which animation should end.
-   *   Defaults to the last row in the image.
-   * @param endCol
-   *   (Optional) The column of the frame at which animation should end.
-   *   Defaults to the last column in the image.
-   * @param squeeze
-   *   (Optional) A boolean determining whether startCol and endCol define
-   *   a box within which to find frames for this animation, or whether
-   *   frames from any column can be used (after startCol in startRow and
-   *   before endCol in endRow). Defaults to false. For more information on
-   *   how this works, see the documentation on instantiating a new Sprite.
-   * @param flipped
-   *   (Optional) An array with two boolean values indicating whether to draw
- *     each frame flipped right-to-left and top-to-bottom, respectively.
- *     Defaults to [false, false] (not flipped along either axis).
+   * @param {Number} [endRow]
+   *   The row of the frame at which animation should end. Defaults to the last
+   *   row in the image.
+   * @param {Number} [endCol]
+   *   The column of the frame at which animation should end. Defaults to the
+   *   last column in the image.
+   * @param {Boolean} [squeeze=false]
+   *   A Boolean determining whether startCol and endCol define a box within
+   *   which to find frames for this animation, or whether frames from any
+   *   column can be used (after startCol in startRow and before endCol in
+   *   endRow). For more information on how this works, see the documentation
+   *   for the {@link Sprite} constructor.
+   * @param {Object} [flipped={horizontal: false, vertical: false}]
+   *   An object with "horizontal" and "vertical" properties (both Booleans)
+   *   indicating whether the Sprite should be drawn flipped along the
+   *   horizontal or vertical axes.
    */
   setLoop: function(startRow, startCol, endRow, endCol, squeeze, flipped) {
     this.stopLoop();
@@ -460,10 +539,10 @@ Sprite.prototype = {
     if (endCol === null || endCol === undefined) {
       endCol = this.cols-1;
     }
-    if (squeeze != undefined) {
+    if (squeeze !== undefined) {
       this.squeeze = squeeze;
     }
-    if (flipped != undefined) {
+    if (flipped !== undefined) {
       this.flipped = flipped;
     }
     this.startRow = startRow, this.startCol = startCol,
@@ -478,11 +557,42 @@ Sprite.prototype = {
    * Usually this function will be called without parameters since it defaults
    * to using the sprite's settings defined at instantiation time. In cases
    * where the frames that should be used in an animation change, this function
-   * takes the same parameters as setLoop() for convenience; using these
+   * takes the same parameters as Sprite#setLoop() for convenience; using these
    * parameters is equivalent to calling sprite.setLoop(params).startLoop().
+   *
+   * @param {Number} [startRow]
+   *   The row of the frame at which animation should start. Defaults to the
+   *   starting row of the current animation sequence.
+   * @param {Number} [startCol]
+   *   The column of the frame at which animation should start. Defaults to the
+   *   starting column of the current animation sequence.
+   * @param {Number} [endRow]
+   *   The row of the frame at which animation should end. Defaults to the
+   *   ending row of the current animation sequence unless startRow and
+   *   startCol are specified, in which case it defaults to the last row in the
+   *   image.
+   * @param {Number} [endCol]
+   *   The column of the frame at which animation should end. Defaults to the
+   *   ending column of the current animation sequence unless startRow and
+   *   startCol are specified, in which case it defaults to the last column in
+   *   the image.
+   * @param {Boolean} [squeeze]
+   *   A Boolean determining whether startCol and endCol define a box within
+   *   which to find frames for this animation, or whether frames from any
+   *   column can be used (after startCol in startRow and before endCol in
+   *   endRow). For more information on how this works, see the documentation
+   *   for the {@link Sprite} constructor. Defaults to the squeeze setting for
+   *   the current animation sequence unless startRow and startCol are
+   *   specified, in which case it defaults to false.
+   * @param {Object} [flipped]
+   *   An object with "horizontal" and "vertical" properties (both Booleans)
+   *   indicating whether the Sprite should be drawn flipped along the
+   *   horizontal or vertical axes. Defaults to the flipped setting for the
+   *   current animation sequence unless startRow and startCol are specified,
+   *   in which case it defaults to {horizontal: false, vertical: false}.
    */
   startLoop: function(startRow, startCol, endRow, endCol, squeeze, flipped) {
-    if (startRow != undefined && startCol != undefined) {
+    if (startRow !== undefined && startCol !== undefined) {
       this.setLoop(startRow, startCol, endRow, endCol, squeeze, flipped);
     }
     this.lastFrameUpdateTime = Date.now();
@@ -508,35 +618,69 @@ Sprite.prototype = {
    * The loop concludes at the final frame and does not reset to the first
    * frame. Use the callback function to reset it if you need that behavior.
    *
-   * @param callback
-   *   (Optional) A callback function to run after the loop has completed.
-   *   Receives the sprite object as its only parameter.
-   *
    * Usually this function will be called without parameters since it defaults
    * to using the sprite's settings defined at instantiation time. In cases
    * where the frames that should be used in an animation change, this function
-   * takes the same parameters as setLoop() for convenience; using these
+   * takes the same parameters as Sprite#setLoop() for convenience; using these
    * parameters is equivalent to calling sprite.setLoop(params).startLoop().
+   *
+   * @param {Function} [callback]
+   *   A callback function to run after the loop has completed, or a falsey
+   *   value to skip this argument.
+   * @param {Sprite} [callback.sprite]
+   *   The Sprite that was animated.
+   * @param {Number} [startRow]
+   *   The row of the frame at which animation should start. Defaults to the
+   *   starting row of the current animation sequence.
+   * @param {Number} [startCol]
+   *   The column of the frame at which animation should start. Defaults to the
+   *   starting column of the current animation sequence.
+   * @param {Number} [endRow]
+   *   The row of the frame at which animation should end. Defaults to the
+   *   ending row of the current animation sequence unless startRow and
+   *   startCol are specified, in which case it defaults to the last row in the
+   *   image.
+   * @param {Number} [endCol]
+   *   The column of the frame at which animation should end. Defaults to the
+   *   ending column of the current animation sequence unless startRow and
+   *   startCol are specified, in which case it defaults to the last column in
+   *   the image.
+   * @param {Boolean} [squeeze]
+   *   A Boolean determining whether startCol and endCol define a box within
+   *   which to find frames for this animation, or whether frames from any
+   *   column can be used (after startCol in startRow and before endCol in
+   *   endRow). For more information on how this works, see the documentation
+   *   for the {@link Sprite} constructor. Defaults to the squeeze setting for
+   *   the current animation sequence unless startRow and startCol are
+   *   specified, in which case it defaults to false.
+   * @param {Object} [flipped]
+   *   An object with "horizontal" and "vertical" properties (both Booleans)
+   *   indicating whether the Sprite should be drawn flipped along the
+   *   horizontal or vertical axes. Defaults to the flipped setting for the
+   *   current animation sequence unless startRow and startCol are specified,
+   *   in which case it defaults to {horizontal: false, vertical: false}.
    */
   runLoop: function(callback, startRow, startCol, endRow, endCol, squeeze, flipped) {
     this.runLoopCallback = callback || function() {};
     this._runOnce = true;
     Array.prototype.shift.call(arguments);
     this.startLoop.apply(this, arguments);
+    return this;
   },
   /**
    * Goes back one frame in the animation loop.
    *
-   * This is equivalent to changeFrame(-1). It is provided as a convenience
-   * and to complement nextFrame().
+   * This is equivalent to Sprite#changeFrame(-1). It is provided as a
+   * convenience and to complement Sprite#nextFrame().
    */
   prevFrame: function() {
-    return changeFrame(-1);
+    changeFrame(-1);
+    return this;
   },
   /**
    * Advances one frame in the animation loop.
    *
-   * This is equivalent to (but more efficient than) changeFrame(1).
+   * This is equivalent to (but more efficient than) Sprite#changeFrame(1).
    */
   nextFrame: function() {
     this.col++;
@@ -582,10 +726,10 @@ Sprite.prototype = {
   /**
    * Converts a frame number to row and column numbers.
    *
-   * @param frame
+   * @param {Number} frame
    *   The frame number to convert.
    *
-   * @return
+   * @return {Object}
    *   An object containing the 'frame' number and the corresponding 'row' and
    *   'col' properties.
    */
@@ -607,7 +751,7 @@ Sprite.prototype = {
    */
   clone: function() {
     return new Sprite(this.sourceFile, this);
-  },
+  }
 };
 
 this.Sprite = Sprite;
@@ -619,6 +763,7 @@ this.Sprite = Sprite;
 
 /**
  * Override these functions to provide alternative cache implementations.
+ * @ignore
  */
 (function() {
   var images = {}; // Image cache
@@ -626,12 +771,14 @@ this.Sprite = Sprite;
   /**
    * Get an image from the cache.
    *
-   * @param src
+   * @param {String} src
    *   The file path of the image.
    *
-   * @return
-   *   The Image object associated with the file or null if the image object
+   * @return {Image}
+   *   The Image object associated with the file or null if the Image object
    *   has not yet been cached.
+   *
+   * @static
    */
   Sprite.getImageFromCache = function(src) {
     return images[src] ? images[src] : null;
@@ -640,10 +787,12 @@ this.Sprite = Sprite;
   /**
    * Save an image to the cache.
    * 
-   * @param src
+   * @param {String} src
    *   The file path of the image.
-   * @param image
+   * @param {Image} image
    *   The Image object to cache.
+   *
+   * @static
    */
   Sprite.saveImageToCache = function(src, image) {
     images[src] = image;
@@ -652,19 +801,28 @@ this.Sprite = Sprite;
   /**
    * Preload a list of images asynchronously.
    * 
-   * @param files
-   *   An array of paths to images to preload.
-   * @param options
+   * @param {String[]} files
+   *   An Array of paths to images to preload.
+   * @param {Object} [options]
    *   A map of options for this function.
-   *   - finishCallback: A function to run when all images have finished
-   *     loading. Receives the number of images loaded as a parameter.
-   *   - itemCallback: A function to run when an image has finished loading.
-   *     Receives the file path of the loaded image, how many images have been
-   *     loaded so far (including the current one), and the total number of
-   *     images to load.
+   * @param {Function} [options.finishCallback]
+   *   A function to run when all images have finished loading.
+   * @param {Number} [options.finishCallback.numLoaded]
+   *   The number of images that were preloaded.
+   * @param {Function} [options.itemCallback]
+   *   A function to run when an image has finished loading.
+   * @param {String} [options.itemCallback.filepath]
+   *   The file path of the loaded image.
+   * @param {Number} [options.itemCallback.numLoaded]
+   *   The number of images that have been loaded so far (including the current
+   *   one).
+   * @param {Number} [options.itemCallback.numImages]
+   *   The total number of images to load.
+   *
+   * @static
    */
   Sprite.preloadImages = function(files, options) {
-    var l = files.length, m = -1;
+    var l = files.length, m = -1, src, image;
     var notifyLoaded = function(itemCallback, src) {
       m++;
       if (typeof itemCallback == 'function') {
@@ -675,15 +833,16 @@ this.Sprite = Sprite;
       }
     };
     notifyLoaded();
+    var onload = function() {
+      Sprite.saveImageToCache(this._src, this);
+      notifyLoaded(options.itemCallback, this._src);
+    };
     while (files.length) {
-      var src = files.pop();
-      var image = new Image();
-      image.num = l-files.length;
+      src = files.pop();
+      image = new Image();
+      image._num = l-files.length;
       image._src = src;
-      image.onload = function() {
-        Sprite.saveImageToCache(this._src, this);
-        notifyLoaded(options.itemCallback, this.src);
-      }
+      image.onload = onload;
       image.src = src;
     }
   };
