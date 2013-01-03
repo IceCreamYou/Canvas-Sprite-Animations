@@ -60,4 +60,4 @@ Created by [Isaac Sukin](http://www.isaacsukin.com/) (IceCreamYou).
 The centipede-sprite.png image used for the
 [demo](http://icecreamyou.github.com/Canvas-Sprite-Animations/) is from Atari.
 
-All resources are MIT licensed: http://opensource.org/licenses/mit-license.php
+All resources are [MIT licensed](http://opensource.org/licenses/mit-license.php).
