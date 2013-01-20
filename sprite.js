@@ -21,7 +21,11 @@
  *   Creates a new SpriteMap instance.
  *
  * @param {String} src
- *   The file path of the base image.
+ *   The image to draw, in the form of one of the following:
+ *
+ *   - The file path of the base image
+ *   - An Image
+ *   - A Canvas
  * @param {Object} animations
  *   A map (Object) where the keys are the names of animation sequences and the
  *   values are maps (Objects) specifying the starting and ending frames of the
@@ -56,10 +60,11 @@
  */
 function SpriteMap(src, animations, options) {
   this.sprite = new Sprite(src, options);
+  this.baseImage = this.sprite.image;
+  this.cachedImages = {'00': this.baseImage};
   this.sprite.spriteMap = this;
   this.maps = {};
-  var name;
-  for (name in animations) {
+  for (var name in animations) {
     if (animations.hasOwnProperty(name)) {
       this.set(name, animations[name]);
     }
@@ -92,8 +97,10 @@ SpriteMap.prototype = {
    *   row in the Sprite until reaching the last frame in the loop. More
    *   details on how this work are documented in the {@link Sprite}
    *   constructor.
-   * @param {Boolean[]} [options.flipped]
-   *   Indicates whether the Sprite should be flipped when drawn.
+   * @param {Object} [options.flipped={horizontal: false, vertical: false}]
+   *   An object with "horizontal" and "vertical" properties (both Booleans)
+   *   indicating whether the Sprite should be drawn flipped along the
+   *   horizontal or vertical axes.
    * @param {Boolean} [options.flipped.horizontal=false]
    * @param {Boolean} [options.flipped.vertical=false]
    */
@@ -114,8 +121,14 @@ SpriteMap.prototype = {
         endRow:   typeof options.endRow   !== 'undefined' ? options.endRow   : this.sprite.rows-1,
         endCol:   typeof options.endCol   !== 'undefined' ? options.endCol   : this.sprite.cols-1,
         squeeze:  typeof options.squeeze  !== 'undefined' ? options.squeeze  : false,
-        flipped:  typeof options.flipped  !== 'undefined' ? options.flipped  : [false, false]
+        flipped:  typeof options.flipped  !== 'undefined' ? options.flipped  : {horizontal: false, vertical: false}
     };
+    var f = this.maps[name].flipped,
+        key = (f.horizontal ? '1' : '0') + (f.vertical ? '1' : '0');
+    if (typeof this.cachedImages[key] === 'undefined') {
+      this.cachedImages[key] = this.sprite._prerender(this.baseImage, f);
+    }
+    this.maps[name].image = this.cachedImages[key];
     return this;
   },
   /**
@@ -150,6 +163,9 @@ SpriteMap.prototype = {
     this.activeLoop = name;
     var m = this.maps[name];
     this.sprite.setLoop(m.startRow, m.startCol, m.endRow, m.endCol, m.squeeze, m.flipped);
+    if (m.image) {
+      this.sprite.image = m.image;
+    }
     return this;
   },
   /**
@@ -267,7 +283,11 @@ this.SpriteMap = SpriteMap;
  *   Creates a new Sprite instance.
  *
  * @param {String} src
- *   The file path of the base image.
+ *   The image to draw, in the form of one of the following:
+ *
+ *   - The file path of the base image
+ *   - An Image
+ *   - A Canvas
  * @param {Object} [options]
  *   An object whose properties affect how the sprite is animated. Each of the
  *   properties will be attached to the Sprite object directly, along with
@@ -350,19 +370,50 @@ this.SpriteMap = SpriteMap;
  *   The Sprite that was loaded. 
  */
 function Sprite(src, options) {
-  this.sourceFile = src;
-  var cachedImage = Sprite.getImageFromCache(src);
-  if (cachedImage) {
-    this._init(cachedImage, options);
+  // String image file path
+  if (typeof src == 'string') {
+    this.sourceFile = src;
+    var cachedImage = Sprite.getImageFromCache(src);
+    if (cachedImage) { // cached
+      this._init(cachedImage, options);
+    }
+    else { // not cached
+      var image = new Image(), t = this;
+      image.onload = function() {
+        t._init(this, options);
+      };
+      image._src = src;
+      image.src = src;
+      Sprite.saveImageToCache(src, image);
+    }
   }
-  else {
-    var image = new Image(), t = this;
-    image.onload = function() {
-      t._init(this, options);
-    };
-    image._src = src;
-    image.src = src;
-    Sprite.saveImageToCache(src, image);
+  // Image
+  else if (src instanceof HTMLImageElement || src instanceof Image) {
+    if (!src.src) {
+      return;
+    }
+    this.sourceFile = src._src || src.src;
+    if (src.complete || (src.width && src.height)) { // loaded
+      Sprite.saveImageToCache(this.sourceFile, src);
+      this._init(src, options);
+    }
+    else { // not loaded
+      if (src._src) { // We've already tried to draw this one
+        return; // The onload callback will initialize the sprite when it runs
+      }
+      var o = src.onload, t = this;
+      src.onload = function() {
+        if (typeof o == 'function') { // don't overwrite any existing handler
+          o();
+        }
+        Sprite.saveImageToCache(t.sourceFile, src);
+        t._init(this, options);
+      };
+    }
+  }
+  // Canvas
+  else if (src instanceof HTMLCanvasElement) {
+    this._init(src, options);
   }
 }
 Sprite.prototype = {
@@ -402,6 +453,28 @@ Sprite.prototype = {
     }
   },
   /**
+   * Pre-render the image onto a canvas.
+   *
+   * Canvases typically draw faster than images, especially when flipped.
+   *
+   * @return {HTMLCanvasElement} The prerendered flipped image.
+   * @ignore
+   */
+  _prerender: function(image, flipped) {
+    var tempCanvas = document.createElement('canvas');
+    tempCanvas.width = this.width;
+    tempCanvas.height = this.height;
+    var tempContext = tempCanvas.getContext('2d');
+    if (flipped.horizontal || flipped.vertical) {
+      tempContext.translate(flipped.horizontal ? tempCanvas.width : 0,
+          flipped.vertical ? tempCanvas.height : 0);
+      tempContext.scale(flipped.horizontal ? -1 : 1,
+          flipped.vertical ? -1 : 1);
+    }
+    tempContext.drawImage(image, 0, 0);
+    return tempCanvas;
+  },
+  /**
    * Draws the sprite.
    *
    * @param {CanvasRenderingContext2D} ctx
@@ -426,21 +499,24 @@ Sprite.prototype = {
       ctx.save();
       w = w || this.projectedW;
       h = h || this.projectedH;
-      if (this.flipped.horizontal || this.flipped.vertical) {
-        ctx.scale(this.flipped.horizontal ? -1 : 1, this.flipped.vertical ? -1 : 1);
-        if (this.flipped.horizontal) x = -x - w;
-        if (this.flipped.vertical) y = -y - h;
+      var xOffset = this.col * this.frameW,
+          yOffset = this.row * this.frameH;
+      if (this.flipped.horizontal) {
+        xOffset = this.width - xOffset - this.frameW;
+      }
+      if (this.flipped.vertical) {
+        yOffset = this.height - yOffset - this.frameH;
       }
       ctx.drawImage(
-          this.image,             // image
-          this.col * this.frameW, // image x-offset
-          this.row * this.frameH, // image y-offset
-          this.frameW,            // image slice width
-          this.frameH,            // image slice height
-          x,                      // canvas x-position
-          y,                      // canvas y-position
-          w,                      // slice width on canvas
-          h                       // slice height on canvas
+          this.image,  // image
+          xOffset,     // image x-offset
+          yOffset,     // image y-offset
+          this.frameW, // image slice width
+          this.frameH, // image slice height
+          x,           // canvas x-position
+          y,           // canvas y-position
+          w,           // slice width on canvas
+          h            // slice height on canvas
       );
       ctx.restore();
     } catch(e) {
