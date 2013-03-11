@@ -59,16 +59,23 @@
  *   class.
  */
 function SpriteMap(src, animations, options) {
-  this.sprite = new Sprite(src, options);
-  this.baseImage = this.sprite.image;
-  this.cachedImages = {'00': this.baseImage};
-  this.sprite.spriteMap = this;
-  this.maps = {};
-  for (var name in animations) {
-    if (animations.hasOwnProperty(name)) {
-      this.set(name, animations[name]);
+  var origPIC = typeof options.postInitCallback == 'function' ? options.postInitCallback : null;
+  var t = this;
+  options.postInitCallback = function() {
+    if (origPIC) {
+      t.baseImage = t.sprite.image;
+      t.cachedImages = {'00': t.baseImage};
+      t.maps = {};
+      for (var name in animations) {
+        if (animations.hasOwnProperty(name)) {
+          t.set(name, animations[name]);
+        }
+      }
+      origPIC.apply(this, arguments);
     }
-  }
+  };
+  this.sprite = new Sprite(src, options);
+  this.sprite.spriteMap = this;
 }
 SpriteMap.prototype = {
   /**
