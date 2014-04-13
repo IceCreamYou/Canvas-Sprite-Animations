@@ -19,6 +19,7 @@ Put the script in your HTML document:
 
 There are several ways to use sprite.js. At its simplest:
 
+    ```javascript
     // Create the sprite.
     var sprite = new Sprite('sprite.png', {
       frameW: 60,
@@ -28,11 +29,12 @@ There are several ways to use sprite.js. At its simplest:
         sprite.startLoop();
       },
     });
-    
+
     // Draw the sprite. You should do this every time you repaint the canvas.
     // Frames update automatically.
     // var context = document.getElementById('canvas').getContext('2d');
     sprite.draw(context, 100, 100); // x and y position on canvas
+    ```
 
 There are many more options you can use for finer-grained control, including
 using multiple animation sequences on one sprite sheet. See index.html for a
