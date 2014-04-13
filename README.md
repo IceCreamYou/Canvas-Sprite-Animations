@@ -15,7 +15,9 @@ Usage
 
 Put the script in your HTML document:
 
-    <script src="sprite.min.js"></script>
+```html
+<script src="sprite.min.js"></script>
+```
 
 There are several ways to use sprite.js. At its simplest:
 
