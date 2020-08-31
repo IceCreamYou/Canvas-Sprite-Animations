@@ -2,11 +2,12 @@
   "name": "@jjy/canvas-sprite-animations",
   "version": "1.0.0",
   "description": "A library for animating sprites on HTML Canvas.  Original code by Isaac Sukin (IceCreamYou on GitHub) --- I am uploading his library to npm for convenience.",
-  "main": "sprite.min.js",
+  "main": "sprite.js",
   "directories": {
     "doc": "docs"
   },
   "scripts": {
+    "build": "webpack --config webpack.config.js --mode production",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -14,8 +15,7 @@
     "url": "git+https://github.com/jjayeon/Canvas-Sprite-Animations.git"
   },
   "files": [
-    "sprites.js",
-    "sprites.min.js"
+    "sprite.js"
   ],
   "keywords": [
     "canvas",
@@ -26,5 +26,11 @@
   "bugs": {
     "url": "https://github.com/jjayeon/Canvas-Sprite-Animations/issues"
   },
-  "homepage": "https://github.com/jjayeon/Canvas-Sprite-Animations#readme"
+  "homepage": "https://github.com/jjayeon/Canvas-Sprite-Animations#readme",
+  "devDependencies": {
+    "clean-webpack-plugin": "^3.0.0",
+    "html-webpack-plugin": "^4.4.1",
+    "webpack": "^4.44.1",
+    "webpack-cli": "^3.3.12"
+  }
 }
