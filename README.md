@@ -8,7 +8,11 @@ To use this package with npm, enter:
 	
 Or the equivalent in Yarn, of course.
 
-In my own usage so far, it looks like SpriteMap works as intended, but Sprite breaks when called without the options parameter, or with any options missing.  I will investigate this further, but for now, I recommend just using SpriteMap for whatever it is you're doing, and treat Sprite as an internal utility class.
+To use, import as so:
+
+    import { Sprite, SpriteMap } from "@jjy/canvas-sprite-animations":
+	
+And use Sprite and SpriteMap as constructors.  I recommend using Webpack + the file-loader plugin for managing images, which I have done in src/test.js (in the GitHub repo).
 
 # Original:
 

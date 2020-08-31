@@ -1,5 +1,7 @@
 import { Sprite, SpriteMap } from "./sprite.js";
 
+import imgurl from "./centipede-sprite.png";
+
 const canvas = document.getElementById("canvas");
 const context = canvas.getContext("2d");
 
@@ -33,7 +35,7 @@ window.onload = function () {
 
   // Initialize the SpriteMap
   const spriteMap = new SpriteMap(
-    "centipede-sprite.png", // sprite image
+    imgurl, // sprite image
     {
       // animation sequences
       ButtWalk: { startRow: 0, startCol: 0, endRow: 1, endCol: 3 },
@@ -53,6 +55,7 @@ window.onload = function () {
       projectedH: 120, // Displayed height (in this case 200% size)
       interval: 50, // Switch frames every 50ms
       useTimer: false, // Rely on requestAnimFrame to update frames instead of setInterval
+      flipped: { horizontal: false, vertical: false },
       postInitCallback: function (sprite) {
         spriteMap.start("ButtWalk"); // Start running the animation
         animate(); // Animate the canvas
@@ -71,6 +74,4 @@ window.onload = function () {
     spriteMap.draw(context, 100, 100); // Draw the sprite
     window.requestAnimFrame(animate); // Run the animation loop
   }
-
-  animate();
 };
