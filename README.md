@@ -1,3 +1,5 @@
+[![npm version](https://badge.fury.io/js/canvas-sprite-animations.svg)](https://badge.fury.io/js/canvas-sprite-animations)
+
 Sprite.js is a powerful, easy-to-use Sprite animation library for HTML5 Canvas.
 
 Two classes are provided:
