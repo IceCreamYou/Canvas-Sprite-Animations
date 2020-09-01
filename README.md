@@ -59,7 +59,7 @@ caching system, you can override several static methods:
 License/Credits
 ---------------
 
-Created by [Isaac Sukin](http://www.isaacsukin.com/) (IceCreamYou).
+Created by [Isaac Sukin](https://www.isaacsukin.com/) (IceCreamYou).
 
 The centipede-sprite.png image used for the
 [demo](http://icecreamyou.github.com/Canvas-Sprite-Animations/) is from Atari.

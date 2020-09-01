@@ -1,0 +1,34 @@
+{
+  "name": "canvas-sprite-animations",
+  "version": "1.0.1",
+  "description": "A powerful, easy-to-use Sprite animation library designed for HTML5 Canvas.",
+  "main": "sprite.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IceCreamYou/Canvas-Sprite-Animations.git"
+  },
+  "keywords": [
+    "sprite",
+    "sprite-animation-library",
+    "sprite-sheet",
+    "spritemap",
+    "canvas",
+    "canvas2d",
+    "animation",
+    "javascript-library",
+    "game-library",
+    "html5-canvas"
+  ],
+  "author": "Isaac Sukin (@IceCreamYou - https://www.isaacsukin.com/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/IceCreamYou/Canvas-Sprite-Animations/issues"
+  },
+  "homepage": "https://github.com/IceCreamYou/Canvas-Sprite-Animations#readme"
+}
