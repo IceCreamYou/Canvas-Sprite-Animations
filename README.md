@@ -8,7 +8,7 @@ Two classes are provided:
  - **Sprite**: Handles a single animation sequence.
 
 You can
-[read the full documentation](http://icecreamyou.github.com/Canvas-Sprite-Animations/docs/)
+[read the full documentation](https://icecreamyou.github.io/Canvas-Sprite-Animations/docs/)
 for a complete explanation of every available method.
 
 
@@ -43,7 +43,7 @@ sprite.draw(context, 100, 100); // x and y position on canvas
 There are many more options you can use for finer-grained control, including
 using multiple animation sequences on one sprite sheet. See index.html for a
 full example of using a SpriteMap or
-[read the full documentation](http://icecreamyou.github.com/Canvas-Sprite-Animations/docs/).
+[read the full documentation](https://icecreamyou.github.io/Canvas-Sprite-Animations/docs/).
 
 
 Caching
@@ -64,6 +64,6 @@ License/Credits
 Created by [Isaac Sukin](https://www.isaacsukin.com/) (IceCreamYou).
 
 The centipede-sprite.png image used for the
-[demo](http://icecreamyou.github.com/Canvas-Sprite-Animations/) is from Atari.
+[demo](https://icecreamyou.github.io/Canvas-Sprite-Animations/) is from Atari.
 
 All resources are MIT licensed: http://opensource.org/licenses/mit-license.php
